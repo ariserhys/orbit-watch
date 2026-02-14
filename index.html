@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OrbitWatch — Real-Time ISS Tracker</title>
+    <meta name="description"
+        content="Track the International Space Station in real-time on a 3D globe. Live coordinates, altitude, velocity, and astronaut data.">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Space+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+
+    <!-- App CSS -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <!-- Nav -->
+    <nav class="nav">
+        <div class="nav__logo">ORBITWATCH</div>
+        <div class="nav__toolbar">
+            <button class="toolbar__btn active" id="btn-daynight" title="Day/Night Cycle">
+                <span class="toolbar__icon">☀</span>
+                <span class="toolbar__label">DAY/NIGHT</span>
+            </button>
+            <button class="toolbar__btn active" id="btn-clouds" title="Cloud Layer">
+                <span class="toolbar__icon">☁</span>
+                <span class="toolbar__label">CLOUDS</span>
+            </button>
+            <span class="toolbar__sep"></span>
+            <button class="toolbar__btn" id="btn-speed" title="Speed Comparison" data-drawer="drawer-speed">
+                <span class="toolbar__icon">⚡</span>
+                <span class="toolbar__label">SPEED</span>
+            </button>
+            <button class="toolbar__btn" id="btn-stats" title="ISS Statistics" data-drawer="drawer-stats">
+                <span class="toolbar__icon">📊</span>
+                <span class="toolbar__label">STATS</span>
+            </button>
+            <button class="toolbar__btn" id="btn-telemetry" title="ISS Telemetry" data-drawer="drawer-telemetry">
+                <span class="toolbar__icon">🛰</span>
+                <span class="toolbar__label">TELEMETRY</span>
+            </button>
+            <button class="toolbar__btn" id="btn-passes" title="ISS Pass Prediction" data-drawer="drawer-passes">
+                <span class="toolbar__icon">📍</span>
+                <span class="toolbar__label">PASSES</span>
+            </button>
+            <button class="toolbar__btn" id="btn-meteor" title="Meteor Showers" data-drawer="drawer-meteor">
+                <span class="toolbar__icon">☄️</span>
+                <span class="toolbar__label">METEORS</span>
+            </button>
+            <span class="toolbar__sep"></span>
+            <button class="toolbar__btn" id="btn-camera" title="Live ISS Camera" data-drawer="drawer-camera">
+                <span class="toolbar__icon">📹</span>
+                <span class="toolbar__label">CAMERA</span>
+            </button>
+            <button class="toolbar__btn" id="btn-sound" title="Ambient Sound">
+                <span class="toolbar__icon">🔊</span>
+                <span class="toolbar__label">SOUND</span>
+            </button>
+        </div>
+        <div class="nav__status">
+            <span class="nav__dot"></span>
+            <span class="nav__label">LIVE</span>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main">
+        <!-- Left Panel — Data -->
+        <section class="panel" aria-label="ISS Data">
+            <div class="panel__hero anim-fade" style="--delay: 0s">
+                <h1 class="hero-title">ISS</h1>
+                <p class="hero-subtitle">INTERNATIONAL SPACE STATION</p>
+            </div>
+
+            <div class="panel__coords anim-fade" style="--delay: 0.15s">
+                <div class="coord">
+                    <span class="coord__label">LATITUDE</span>
+                    <span class="coord__value" id="lat">—</span>
+                </div>
+                <div class="coord">
+                    <span class="coord__label">LONGITUDE</span>
+                    <span class="coord__value" id="lng">—</span>
+                </div>
+            </div>
+
+            <div class="panel__metrics anim-fade" style="--delay: 0.3s">
+                <div class="metric">
+                    <span class="metric__value" id="altitude">408</span>
+                    <span class="metric__unit">KM</span>
+                    <span class="metric__label">ALTITUDE</span>
+                </div>
+                <div class="metric">
+                    <span class="metric__value" id="velocity">27,600</span>
+                    <span class="metric__unit">KM/H</span>
+                    <span class="metric__label">VELOCITY</span>
+                </div>
+            </div>
+
+            <div class="panel__crew anim-fade" style="--delay: 0.45s">
+                <div class="crew__header">
+                    <span class="crew__dot"></span>
+                    <span class="crew__count" id="crew-count">—</span>
+                    <span class="crew__label">ASTRONAUTS ABOARD</span>
+                </div>
+                <ul class="crew__list" id="crew-list"></ul>
+            </div>
+
+            <div class="panel__location anim-fade" style="--delay: 0.6s">
+                <span class="location__label">CURRENTLY ABOVE</span>
+                <span class="location__value" id="location">Calculating...</span>
+            </div>
+        </section>
+
+        <!-- Drawer: Speed Comparison -->
+        <section class="drawer" id="drawer-speed" aria-label="Speed Comparison">
+            <button class="drawer__back" data-close-drawer>← BACK</button>
+            <h2 class="drawer__title">SPEED</h2>
+            <p class="drawer__subtitle">ISS VS EVERYTHING</p>
+            <div class="speed-bars" id="speed-bars">
+                <!-- Populated by panels.js -->
+            </div>
+            <div class="speed-fact">
+                <span class="speed-fact__label">FUN FACT</span>
+                <span class="speed-fact__value" id="speed-fact">The ISS travels fast enough to go to the Moon and back
+                    every day.</span>
+            </div>
+        </section>
+
+        <!-- Drawer: ISS Stats -->
+        <section class="drawer" id="drawer-stats" aria-label="ISS Statistics">
+            <button class="drawer__back" data-close-drawer>← BACK</button>
+            <h2 class="drawer__title">STATS</h2>
+            <p class="drawer__subtitle">SINCE NOVEMBER 20, 1998</p>
+            <div class="stats-grid" id="stats-grid">
+                <!-- Populated by panels.js -->
+            </div>
+            <div class="stats-sunrise">
+                <span class="stats-sunrise__label">SUNRISES SINCE YOU OPENED THIS PAGE</span>
+                <span class="stats-sunrise__value" id="sunrise-counter">0</span>
+            </div>
+        </section>
+
+        <!-- Drawer: Telemetry -->
+        <section class="drawer" id="drawer-telemetry" aria-label="ISS Telemetry">
+            <button class="drawer__back" data-close-drawer>← BACK</button>
+            <h2 class="drawer__title">TELEMETRY</h2>
+            <p class="drawer__subtitle">ESTIMATED ISS SYSTEMS DATA</p>
+            <div class="telemetry-grid" id="telemetry-grid">
+                <!-- Populated by panels.js -->
+            </div>
+            <div class="telemetry-note">
+                <span class="telemetry-note__text">Values estimated from known ISS specifications and orbital mechanics.
+                    Not real-time telemetry.</span>
+            </div>
+        </section>
+
+        <!-- Right Panel — 3D Globe -->
+        <section class="globe-container anim-fade" style="--delay: 0.2s" aria-label="ISS Globe">
+            <div id="globe"></div>
+        </section>
+
+        <!-- Drawer: Pass Prediction -->
+        <section class="drawer" id="drawer-passes" aria-label="ISS Pass Prediction">
+            <button class="drawer__back" data-close-drawer>← BACK</button>
+            <h2 class="drawer__title">PASSES</h2>
+            <p class="drawer__subtitle" id="passes-status">ISS OVER YOUR LOCATION</p>
+            <div class="passes-list" id="passes-list">
+                <p class="pass-loading">Click to detect your location and compute ISS passes…</p>
+            </div>
+            <div class="pass-info">
+                <span class="pass-info__text">Uses satellite.js + CelesTrak TLE data. Passes with elevation ≥10° shown.
+                    Best viewed on clear nights, away from city lights.</span>
+            </div>
+        </section>
+
+        <!-- Drawer: Meteor Showers -->
+        <section class="drawer" id="drawer-meteor" aria-label="Meteor Showers">
+            <button class="drawer__back" data-close-drawer>← BACK</button>
+            <h2 class="drawer__title">METEORS</h2>
+            <p class="drawer__subtitle">ANNUAL METEOR SHOWER CALENDAR</p>
+            <div class="meteor-content" id="meteor-content">
+                <!-- Populated by predictions.js -->
+            </div>
+        </section>
+
+        <!-- Drawer: Live Camera -->
+        <section class="drawer" id="drawer-camera" aria-label="Live ISS Camera">
+            <button class="drawer__back" data-close-drawer>← BACK</button>
+            <h2 class="drawer__title">CAMERA</h2>
+            <p class="drawer__subtitle">LIVE ISS EXTERNAL VIEW</p>
+            <div class="camera-embed" id="camera-embed">
+                <iframe id="camera-iframe" src="https://www.youtube.com/embed/vytmBNhc9ig?autoplay=1&mute=1"
+                    title="ISS Live Camera" frameborder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen>
+                </iframe>
+            </div>
+            <div class="camera-sources">
+                <span class="camera-sources__label">CAMERA SOURCE</span>
+                <div class="camera-sources__btns">
+                    <button class="camera-src-btn active"
+                        data-src="https://www.youtube.com/embed/vytmBNhc9ig?autoplay=1&mute=1">🌍 HD Earth</button>
+                    <button class="camera-src-btn"
+                        data-src="https://www.youtube.com/embed/DDU-rZs-Ic4?autoplay=1&mute=1">🛰 NASA TV</button>
+                </div>
+            </div>
+            <div class="camera-note">
+                <span class="camera-note__text">During orbital night or signal loss, the screen may appear black. This
+                    is normal.</span>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <span>DATA FROM NASA OPEN NOTIFY API</span>
+        <span>UPDATES EVERY 5S</span>
+    </footer>
+
+    <!-- Globe.gl (includes Three.js) -->
+    <script src="//cdn.jsdelivr.net/npm/globe.gl"></script>
+
+    <!-- satellite.js for pass prediction -->
+    <script src="//cdn.jsdelivr.net/npm/satellite.js/dist/satellite.min.js"></script>
+
+    <!-- App JS (ES Module for Three.js + solar-calculator) -->
+    <script type="module" src="js/app.js"></script>
+
+    <!-- Panels JS (Drawer system + Phase 2 panels) -->
+    <script src="js/panels.js"></script>
+
+    <!-- Predictions JS (Pass prediction + Meteor showers) -->
+    <script src="js/predictions.js"></script>
+</body>
+
+</html>

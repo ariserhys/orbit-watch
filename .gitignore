@@ -1,0 +1,12 @@
+# Agent / IDE artifacts
+.agent/
+*.resolved
+SKILL.md
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Editor
+.vscode/
+*.swp
