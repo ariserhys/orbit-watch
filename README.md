@@ -2,7 +2,7 @@
 
 <img src="favicon.png" alt="OrbitWatch" width="120">
 
-# 🛰️ ORBITWATCH
+# ORBITWATCH
 
 **Track the International Space Station in real-time on a 3D globe.**
 
