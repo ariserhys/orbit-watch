@@ -113,6 +113,6 @@ orbit-watch/
 
 ---
 
-**MIT** · Made with 🛰️
+**Abhishek Yadav**
 
 </div>
