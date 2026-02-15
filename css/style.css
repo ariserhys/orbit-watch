@@ -39,6 +39,7 @@ body {
     color: var(--text-primary);
     font-family: var(--font-sans);
     min-height: 100vh;
+    min-height: 100dvh;
     overflow-x: hidden;
 }
 
@@ -95,6 +96,9 @@ ul {
     justify-content: space-between;
     align-items: center;
     padding: 20px 40px;
+    padding-left: max(40px, env(safe-area-inset-left));
+    padding-right: max(40px, env(safe-area-inset-right));
+    padding-top: max(20px, env(safe-area-inset-top));
     border-bottom: 1px solid var(--text-tertiary);
     position: relative;
     z-index: 10;
@@ -144,6 +148,9 @@ ul {
     border: 1px solid transparent;
     border-radius: 4px;
     padding: 6px 10px;
+    min-width: 44px;
+    min-height: 44px;
+    justify-content: center;
     cursor: pointer;
     transition: all var(--transition);
     color: var(--text-secondary);
@@ -189,6 +196,7 @@ ul {
     display: grid;
     grid-template-columns: 1fr 1.4fr;
     min-height: calc(100vh - 120px);
+    min-height: calc(100dvh - 120px);
     position: relative;
 }
 
@@ -203,6 +211,7 @@ ul {
     z-index: 5;
     overflow-y: auto;
     max-height: calc(100vh - 120px);
+    max-height: calc(100dvh - 120px);
     transition: opacity 0.25s ease, transform 0.25s ease;
 }
 
@@ -221,6 +230,9 @@ ul {
     width: calc(100% / 2.4);
     height: 100%;
     padding: 32px 48px 40px;
+    padding-left: max(48px, env(safe-area-inset-left));
+    padding-right: max(48px, env(safe-area-inset-right));
+    padding-top: max(32px, env(safe-area-inset-top));
     display: flex;
     flex-direction: column;
     gap: 28px;
@@ -248,7 +260,8 @@ ul {
     font-size: 11px;
     letter-spacing: 3px;
     cursor: pointer;
-    padding: 0;
+    padding: 12px 0;
+    /* Increase hit area vertically */
     text-align: left;
     transition: color var(--transition);
 }
@@ -966,8 +979,12 @@ ul {
 #globe {
     width: 100%;
     height: 100%;
+    height: 100%;
     min-height: calc(100vh - 120px);
+    min-height: calc(100dvh - 120px);
     background: var(--bg-primary);
+    touch-action: none;
+    /* Prevent pull-to-refresh */
 }
 
 /* Globe.gl canvas overrides */
@@ -1083,6 +1100,9 @@ ul {
     align-items: center;
     padding: 16px 40px;
     border-top: 1px solid var(--text-tertiary);
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+    padding-left: max(40px, env(safe-area-inset-left));
+    padding-right: max(40px, env(safe-area-inset-right));
     font-family: var(--font-sans);
     font-weight: 300;
     font-size: 10px;
@@ -1105,7 +1125,9 @@ ul {
 
     #globe {
         min-height: 55vh;
+        min-height: 55dvh;
         height: 55vh;
+        height: 55dvh;
     }
 
     .panel {
