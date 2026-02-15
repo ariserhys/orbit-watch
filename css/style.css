@@ -972,6 +972,61 @@ ul {
     outline: none;
 }
 
+/* --- ISS Floating Label --- */
+.iss-label {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 6px 12px;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(0, 229, 255, 0.3);
+    border-radius: 6px;
+    pointer-events: none;
+    user-select: none;
+    animation: issLabelPulse 3s ease-in-out infinite;
+    transform: translateX(16px);
+    white-space: nowrap;
+}
+
+.iss-label__tag {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: var(--accent);
+    text-shadow: 0 0 10px rgba(0, 229, 255, 0.5),
+        0 0 20px rgba(0, 229, 255, 0.2);
+}
+
+.iss-label__location {
+    font-family: var(--font-sans);
+    font-weight: 300;
+    font-size: 9px;
+    letter-spacing: 1px;
+    color: var(--text-secondary);
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+@keyframes issLabelPulse {
+
+    0%,
+    100% {
+        box-shadow: 0 0 6px rgba(0, 229, 255, 0.1),
+            0 0 12px rgba(0, 229, 255, 0.05);
+        border-color: rgba(0, 229, 255, 0.25);
+    }
+
+    50% {
+        box-shadow: 0 0 12px rgba(0, 229, 255, 0.25),
+            0 0 24px rgba(0, 229, 255, 0.1);
+        border-color: rgba(0, 229, 255, 0.5);
+    }
+}
+
 /* --- Footer --- */
 .footer {
     display: flex;
