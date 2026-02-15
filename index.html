@@ -20,6 +20,16 @@
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Space+Mono:wght@400;700&display=swap"
         rel="stylesheet">
 
+    <!-- Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Preload globe textures (start download before JS parses) -->
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-day.jpg" as="fetch"
+        crossorigin>
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-night.jpg" as="fetch"
+        crossorigin>
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-clouds.png" as="fetch"
+        crossorigin>
+
     <!-- App CSS -->
     <link rel="stylesheet" href="css/style.css">
 </head>
@@ -30,41 +40,41 @@
         <div class="nav__logo">ORBITWATCH</div>
         <div class="nav__toolbar">
             <button class="toolbar__btn active" id="btn-daynight" title="Day/Night Cycle">
-                <span class="toolbar__icon">☀</span>
+                <i class="ph ph-sun toolbar__icon"></i>
                 <span class="toolbar__label">DAY/NIGHT</span>
             </button>
             <button class="toolbar__btn active" id="btn-clouds" title="Cloud Layer">
-                <span class="toolbar__icon">☁</span>
+                <i class="ph ph-cloud toolbar__icon"></i>
                 <span class="toolbar__label">CLOUDS</span>
             </button>
             <span class="toolbar__sep"></span>
             <button class="toolbar__btn" id="btn-speed" title="Speed Comparison" data-drawer="drawer-speed">
-                <span class="toolbar__icon">⚡</span>
+                <i class="ph ph-gauge toolbar__icon"></i>
                 <span class="toolbar__label">SPEED</span>
             </button>
             <button class="toolbar__btn" id="btn-stats" title="ISS Statistics" data-drawer="drawer-stats">
-                <span class="toolbar__icon">📊</span>
+                <i class="ph ph-chart-bar toolbar__icon"></i>
                 <span class="toolbar__label">STATS</span>
             </button>
             <button class="toolbar__btn" id="btn-telemetry" title="ISS Telemetry" data-drawer="drawer-telemetry">
-                <span class="toolbar__icon">🛰</span>
+                <i class="ph ph-sliders-horizontal toolbar__icon"></i>
                 <span class="toolbar__label">TELEMETRY</span>
             </button>
             <button class="toolbar__btn" id="btn-passes" title="ISS Pass Prediction" data-drawer="drawer-passes">
-                <span class="toolbar__icon">📍</span>
+                <i class="ph ph-crosshair toolbar__icon"></i>
                 <span class="toolbar__label">PASSES</span>
             </button>
             <button class="toolbar__btn" id="btn-meteor" title="Meteor Showers" data-drawer="drawer-meteor">
-                <span class="toolbar__icon">☄️</span>
+                <i class="ph ph-shooting-star toolbar__icon"></i>
                 <span class="toolbar__label">METEORS</span>
             </button>
             <span class="toolbar__sep"></span>
             <button class="toolbar__btn" id="btn-camera" title="Live ISS Camera" data-drawer="drawer-camera">
-                <span class="toolbar__icon">📹</span>
+                <i class="ph ph-video-camera toolbar__icon"></i>
                 <span class="toolbar__label">CAMERA</span>
             </button>
             <button class="toolbar__btn" id="btn-sound" title="Ambient Sound">
-                <span class="toolbar__icon">🔊</span>
+                <i class="ph ph-speaker-high toolbar__icon"></i>
                 <span class="toolbar__label">SOUND</span>
             </button>
         </div>
@@ -167,7 +177,12 @@
 
         <!-- Right Panel — 3D Globe -->
         <section class="globe-container anim-fade" style="--delay: 0.2s" aria-label="ISS Globe">
-            <div id="globe"></div>
+            <div id="globe">
+                <div class="globe-loader" id="globe-loader">
+                    <div class="globe-loader__spinner"></div>
+                    <span class="globe-loader__text">INITIALIZING GLOBE</span>
+                </div>
+            </div>
         </section>
 
         <!-- Drawer: Pass Prediction -->

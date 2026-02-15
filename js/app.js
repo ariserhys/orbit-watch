@@ -21,6 +21,7 @@ import {
   Sprite,
   SpriteMaterial,
   TextureLoader,
+  TOUCH,
   Vector2,
 } from 'https://esm.sh/three';
 
@@ -164,6 +165,8 @@ import {
     userInteracted: false,
     lastInteractionTime: 0,
     idleUpdates: 0,
+    // Animation state (for merged loop)
+    breathPhase: 0,
   };
 
   // --- DOM Refs ---
@@ -244,24 +247,15 @@ import {
     });
 
     state.starField = new Points(geometry, material);
+    state.starField.matrixAutoUpdate = false;
     scene.add(state.starField);
-
-    // Slow drift animation
-    function animateStars() {
-      if (state.starField) {
-        state.starField.rotation.y += 0.00003;
-        state.starField.rotation.x += 0.00001;
-      }
-      requestAnimationFrame(animateStars);
-    }
-    animateStars();
   }
 
   // ============================================
   //  ENHANCEMENT 2: Fresnel Atmospheric Rim Glow
   // ============================================
   function createFresnelGlow(scene, globeRadius) {
-    const glowGeo = new SphereGeometry(globeRadius * 1.018, 64, 64);
+    const glowGeo = new SphereGeometry(globeRadius * 1.018, 32, 32);
     const glowMat = new ShaderMaterial({
       uniforms: {
         glowColor: { value: new Color(0x00e5ff) },
@@ -277,6 +271,7 @@ import {
     });
 
     state.fresnelMesh = new Mesh(glowGeo, glowMat);
+    state.fresnelMesh.matrixAutoUpdate = false;
     scene.add(state.fresnelMesh);
   }
 
@@ -389,19 +384,6 @@ import {
     state.issSprite = new Sprite(material);
     state.issSprite.scale.set(22, 22, 1);
     scene.add(state.issSprite);
-
-    // Breathing animation
-    let breathPhase = 0;
-    function breathe() {
-      breathPhase += 0.02;
-      const scale = 22 + Math.sin(breathPhase) * 2;
-      if (state.issSprite) {
-        state.issSprite.scale.set(scale, scale, 1);
-        state.issSprite.material.opacity = 0.75 + Math.sin(breathPhase * 0.7) * 0.25;
-      }
-      requestAnimationFrame(breathe);
-    }
-    breathe();
   }
 
   function updateISSSpritePosition(lat, lng) {
@@ -475,7 +457,7 @@ import {
         .pointAltitude('alt')
         .pointColor(() => '#00e5ff')
         .pointRadius(0.3)
-        .pointsMerge(false)
+        .pointsMerge(true)
         // ENHANCEMENT 5: Enhanced Rings
         .ringsData(state.ringsData)
         .ringLat('lat')
@@ -514,7 +496,7 @@ import {
       state.globe.controls().autoRotate = true;
       state.globe.controls().autoRotateSpeed = 0.2;
       state.globe.controls().enableDamping = true;
-      state.globe.controls().dampingFactor = 0.08;
+      state.globe.controls().dampingFactor = 0.05;
 
       // Detect user interaction
       const controls = state.globe.controls();
@@ -523,6 +505,16 @@ import {
         state.lastInteractionTime = Date.now();
         state.idleUpdates = 0;
       });
+
+      // Phase 2: Cap device pixel ratio for mobile performance
+      const renderer = state.globe.renderer();
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+      // Phase 2: Configure touch gestures for mobile
+      controls.touches = {
+        ONE: TOUCH.ROTATE,
+        TWO: TOUCH.DOLLY_ROTATE,
+      };
 
       // ENHANCEMENT 1: Add starfield
       createStarField(state.globe.scene());
@@ -537,22 +529,40 @@ import {
       // Add cloud layer
       initClouds(loader);
 
-      // Start sun position animation
-      animateSun();
+      // Setup sun rotation uniform listener
+      const controls2 = state.globe.controls();
+      controls2.addEventListener('change', () => {
+        const pov = state.globe.pointOfView();
+        if (state.globeMaterial) {
+          state.globeMaterial.uniforms.globeRotation.value.set(pov.lng || 0, pov.lat || 0);
+        }
+      });
+
+      // Start master animation loop (replaces 4 separate rAF loops)
+      startMasterAnimateLoop();
 
       // Start data fetching
       fetchISSPosition();
       fetchAstronauts();
       setInterval(fetchISSPosition, CONFIG.UPDATE_INTERVAL);
       setInterval(fetchAstronauts, 5 * 60 * 1000);
+
+      // Hide loading spinner
+      const globeLoader = document.getElementById('globe-loader');
+      if (globeLoader) {
+        globeLoader.classList.add('globe-loader--hidden');
+        setTimeout(() => globeLoader.remove(), 600);
+      }
     });
 
-    // Handle resize
+    // Handle resize (debounced to avoid excessive re-renders)
+    let resizeTimer;
     window.addEventListener('resize', () => {
-      if (!state.globe) return;
-      const w = DOM.globeEl.offsetWidth;
-      const h = DOM.globeEl.offsetHeight;
-      state.globe.width(w).height(h);
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        if (!state.globe) return;
+        state.globe.width(DOM.globeEl.offsetWidth).height(DOM.globeEl.offsetHeight);
+      }, 200);
     });
   }
 
@@ -560,7 +570,7 @@ import {
   function initClouds(loader) {
     loader.loadAsync(CONFIG.CLOUD_TEXTURE).then(cloudTex => {
       const GLOBE_RADIUS = state.globe.getGlobeRadius();
-      const cloudGeo = new SphereGeometry(GLOBE_RADIUS * 1.01, 64, 64);
+      const cloudGeo = new SphereGeometry(GLOBE_RADIUS * 1.01, 32, 32);
       const cloudMat = new MeshPhongMaterial({
         map: cloudTex,
         transparent: true,
@@ -569,41 +579,47 @@ import {
       });
       state.cloudMesh = new Mesh(cloudGeo, cloudMat);
       state.globe.scene().add(state.cloudMesh);
-
-      // Slow cloud rotation
-      function rotateClouds() {
-        if (state.cloudMesh && state.cloudsEnabled) {
-          state.cloudMesh.rotation.y += 0.0001;
-        }
-        requestAnimationFrame(rotateClouds);
-      }
-      rotateClouds();
     }).catch(err => {
       console.warn('Cloud texture failed to load:', err);
     });
   }
 
-  // --- Sun Position Animation ---
-  function animateSun() {
-    function update() {
+  // ============================================
+  //  MASTER ANIMATION LOOP
+  //  Replaces 4 separate requestAnimationFrame loops:
+  //  - Star drift, Cloud rotation, ISS breathing, Sun update
+  // ============================================
+  function startMasterAnimateLoop() {
+    function animate() {
+      requestAnimationFrame(animate);
+
+      // 1. Star drift
+      if (state.starField) {
+        state.starField.rotation.y += 0.00003;
+        state.starField.rotation.x += 0.00001;
+        state.starField.updateMatrix();
+      }
+
+      // 2. Cloud rotation
+      if (state.cloudMesh && state.cloudsEnabled) {
+        state.cloudMesh.rotation.y += 0.0001;
+      }
+
+      // 3. ISS sprite breathing
+      if (state.issSprite) {
+        state.breathPhase += 0.02;
+        const scale = 22 + Math.sin(state.breathPhase) * 2;
+        state.issSprite.scale.set(scale, scale, 1);
+        state.issSprite.material.opacity = 0.75 + Math.sin(state.breathPhase * 0.7) * 0.25;
+      }
+
+      // 4. Sun position update
       if (state.globeMaterial && state.dayNightEnabled) {
         const sunPos = getSunPosition(Date.now());
         state.globeMaterial.uniforms.sunPosition.value.set(sunPos[0], sunPos[1]);
       }
-      requestAnimationFrame(update);
     }
-    update();
-
-    // Also update rotation uniform when globe is interacted with
-    if (state.globe) {
-      const controls = state.globe.controls();
-      controls.addEventListener('change', () => {
-        const pov = state.globe.pointOfView();
-        if (state.globeMaterial) {
-          state.globeMaterial.uniforms.globeRotation.value.set(pov.lng || 0, pov.lat || 0);
-        }
-      });
-    }
+    animate();
   }
 
   // --- Toolbar Toggle Handlers ---
@@ -709,13 +725,13 @@ import {
 
     state.updateCount++;
 
-    // Update ISS point (kept small as fallback)
+    // Update ISS point (kept small as fallback) — reuse array
     state.issData[0] = { lat, lng, alt: 0.06 };
-    state.globe.pointsData([...state.issData]);
+    state.globe.pointsData(state.issData);
 
-    // Update ring pulse
+    // Update ring pulse — reuse array
     state.ringsData[0] = { lat, lng };
-    state.globe.ringsData([...state.ringsData]);
+    state.globe.ringsData(state.ringsData);
 
     // ENHANCEMENT 3: Update sprite position
     updateISSSpritePosition(lat, lng);
@@ -758,12 +774,24 @@ import {
       state.trailPoints.shift();
     }
 
-    // Update path on globe
+    // Update path on globe — split at antimeridian crossings
     if (state.globe && state.trailPoints.length >= 2) {
-      state.globe.pathsData([{
-        coords: [...state.trailPoints]
-      }])
-        .pathPoints('coords');
+      const segments = [];
+      let currentSeg = [state.trailPoints[0]];
+
+      for (let i = 1; i < state.trailPoints.length; i++) {
+        const prevLng = state.trailPoints[i - 1][1];
+        const currLng = state.trailPoints[i][1];
+        // Detect antimeridian crossing (longitude jump > 180°)
+        if (Math.abs(currLng - prevLng) > 180) {
+          segments.push({ coords: currentSeg });
+          currentSeg = [];
+        }
+        currentSeg.push(state.trailPoints[i]);
+      }
+      segments.push({ coords: currentSeg });
+
+      state.globe.pathsData(segments).pathPoints('coords');
     }
   }
 
@@ -778,7 +806,7 @@ import {
   async function reverseGeocode(lat, lng) {
     try {
       const res = await fetch(
-        `${CONFIG.GEOCODE_API}?format=json&lat=${lat}&lon=${lng}&zoom=5&accept-language=en`,
+        `${CONFIG.GEOCODE_API}?format=json&lat=${lat}&lon=${lng}&zoom=10&accept-language=en`,
         { headers: { 'User-Agent': 'OrbitWatch/1.0' } }
       );
       if (!res.ok) throw new Error(`Geocode HTTP ${res.status}`);
@@ -786,9 +814,17 @@ import {
 
       const parts = [];
       if (data.address) {
-        if (data.address.country) parts.push(data.address.country);
-        else if (data.address.ocean) parts.push(data.address.ocean);
-        else if (data.address.sea) parts.push(data.address.sea);
+        // Try to get city-level detail
+        const city = data.address.city || data.address.town || data.address.village
+          || data.address.municipality || data.address.county || '';
+        const stateOrRegion = data.address.state || data.address.region || '';
+        const country = data.address.country || '';
+        const ocean = data.address.ocean || data.address.sea || '';
+
+        if (city) parts.push(city);
+        if (stateOrRegion && stateOrRegion !== city) parts.push(stateOrRegion);
+        if (country) parts.push(country);
+        if (parts.length === 0 && ocean) parts.push(ocean);
       }
 
       const locationText = parts.length > 0
@@ -810,12 +846,39 @@ import {
 
   // --- Approximate location when geocode fails ---
   function getApproxLocation(lat, lng) {
-    if (lat > 60) return 'Arctic Region';
-    if (lat < -60) return 'Antarctic Region';
-    if (lng > -30 && lng < 60 && lat > 0 && lat < 60) return 'Europe / Africa';
-    if (lng > 60 && lng < 150) return 'Asia / Pacific';
-    if (lng > -170 && lng < -30 && lat > 0) return 'North America / Atlantic';
-    if (lng > -90 && lng < -30 && lat < 0) return 'South America';
+    // Polar regions
+    if (lat > 66) return 'Arctic Region';
+    if (lat < -66) return 'Antarctic Region';
+
+    // Oceans (check before continents since ISS is often over water)
+    // Pacific Ocean
+    if (lng > 100 && lat > 0 && lat < 60) return 'North Pacific Ocean';
+    if (lng > 100 && lat <= 0) return 'South Pacific Ocean';
+    if (lng < -100 && lat > 0) return 'North Pacific Ocean';
+    if (lng < -100 && lat <= 0) return 'South Pacific Ocean';
+
+    // Atlantic Ocean
+    if (lng > -60 && lng < -10 && lat > 0 && lat < 60) return 'North Atlantic Ocean';
+    if (lng > -60 && lng < 0 && lat <= 0 && lat > -55) return 'South Atlantic Ocean';
+
+    // Indian Ocean
+    if (lng > 40 && lng <= 100 && lat <= 0 && lat > -55) return 'Indian Ocean';
+    if (lng > 60 && lng <= 100 && lat > 0 && lat < 25) return 'Indian Ocean';
+
+    // Continental regions
+    if (lng > -10 && lng < 40 && lat > 35 && lat < 66) return 'Europe';
+    if (lng > -20 && lng < 55 && lat > -35 && lat < 35) return 'Africa';
+    if (lng > 40 && lng < 65 && lat > 10 && lat < 45) return 'Middle East';
+    if (lng > 65 && lng <= 100 && lat > 25 && lat < 55) return 'Central Asia';
+    if (lng > 100 && lng < 145 && lat > 10 && lat < 55) return 'East Asia';
+    if (lng > 65 && lng <= 100 && lat > 5 && lat <= 25) return 'South Asia';
+    if (lng > 100 && lng < 180 && lat > -15 && lat <= 10) return 'Southeast Asia';
+    if (lng > 110 && lng < 180 && lat > -50 && lat <= -10) return 'Oceania';
+    if (lng > -130 && lng < -60 && lat > 15 && lat < 55) return 'North America';
+    if (lng > -60 && lng < -30 && lat > 0 && lat < 20) return 'Caribbean';
+    if (lng > -120 && lng < -60 && lat > 5 && lat <= 15) return 'Central America';
+    if (lng > -85 && lng < -30 && lat > -55 && lat <= 5) return 'South America';
+
     return 'Over the Ocean';
   }
 
