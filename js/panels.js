@@ -31,6 +31,7 @@
     }
 
     panel.classList.add('panel--hidden');
+    if (compassEl) compassEl.style.opacity = '0';
     drawer.classList.add('open');
     activeDrawer = drawer;
 
@@ -51,6 +52,7 @@
       activeDrawer = null;
     }
     panel.classList.remove('panel--hidden');
+    if (compassEl) compassEl.style.opacity = '1';
 
     // Remove active from drawer buttons
     drawerBtns.forEach(btn => btn.classList.remove('active'));
@@ -65,6 +67,115 @@
   closeBtns.forEach(btn => {
     btn.addEventListener('click', closeDrawer);
   });
+
+  // =============================================
+  // MOBILE HAMBURGER MENU
+  // =============================================
+  const hamburger = document.getElementById('nav-hamburger');
+  const toolbar = document.getElementById('nav-toolbar');
+  const backdrop = document.getElementById('nav-backdrop');
+
+  function closeMobileNav() {
+    if (toolbar) toolbar.classList.remove('open');
+    if (backdrop) backdrop.classList.remove('open');
+    if (hamburger) {
+      hamburger.classList.remove('open');
+      hamburger.setAttribute('aria-expanded', 'false');
+    }
+  }
+
+  if (hamburger && toolbar && backdrop) {
+    hamburger.addEventListener('click', () => {
+      const isOpen = toolbar.classList.toggle('open');
+      backdrop.classList.toggle('open', isOpen);
+      hamburger.classList.toggle('open', isOpen);
+      hamburger.setAttribute('aria-expanded', String(isOpen));
+    });
+
+    backdrop.addEventListener('click', closeMobileNav);
+
+    // Close mobile nav when a toolbar button is tapped
+    toolbar.querySelectorAll('.toolbar__btn').forEach(btn => {
+      btn.addEventListener('click', closeMobileNav);
+    });
+  }
+
+  // =============================================
+  // COMPASS SCROLLBAR
+  // =============================================
+  const compassEl = document.getElementById('compass-scroll');
+  const compassIndicator = document.getElementById('compass-indicator');
+  let isDragging = false;
+
+  function updateCompass() {
+    if (!panel || !compassIndicator || isDragging) return;
+    const scrollTop = panel.scrollTop;
+    const scrollHeight = panel.scrollHeight - panel.clientHeight;
+    if (scrollHeight <= 0) {
+      if (compassEl) compassEl.style.opacity = '0';
+      return;
+    }
+    if (compassEl) compassEl.style.opacity = '1';
+    const trackHeight = compassEl.clientHeight;
+    const indicatorHeight = compassIndicator.clientHeight;
+    const maxTop = trackHeight - indicatorHeight;
+    const ratio = scrollTop / scrollHeight;
+    compassIndicator.style.transform = 'translateY(' + (ratio * maxTop) + 'px)';
+  }
+
+  // Scroll panel to a ratio (0–1)
+  function scrollToRatio(ratio) {
+    if (!panel) return;
+    const scrollHeight = panel.scrollHeight - panel.clientHeight;
+    panel.scrollTop = ratio * scrollHeight;
+  }
+
+  // Convert a Y coordinate (relative to track) into a 0–1 ratio
+  function yToRatio(clientY) {
+    if (!compassEl) return 0;
+    const rect = compassEl.getBoundingClientRect();
+    const indicatorHeight = compassIndicator ? compassIndicator.clientHeight : 32;
+    const trackHeight = rect.height - indicatorHeight;
+    const y = clientY - rect.top - indicatorHeight / 2;
+    return Math.max(0, Math.min(1, y / trackHeight));
+  }
+
+  // --- Click anywhere on the track to jump ---
+  if (compassEl) {
+    compassEl.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      isDragging = true;
+      const ratio = yToRatio(e.clientY);
+      scrollToRatio(ratio);
+      const trackHeight = compassEl.clientHeight - compassIndicator.clientHeight;
+      compassIndicator.style.transform = 'translateY(' + (ratio * trackHeight) + 'px)';
+      compassEl.setPointerCapture(e.pointerId);
+    });
+
+    compassEl.addEventListener('pointermove', (e) => {
+      if (!isDragging) return;
+      e.preventDefault();
+      const ratio = yToRatio(e.clientY);
+      scrollToRatio(ratio);
+      const trackHeight = compassEl.clientHeight - compassIndicator.clientHeight;
+      compassIndicator.style.transform = 'translateY(' + (ratio * trackHeight) + 'px)';
+    });
+
+    compassEl.addEventListener('pointerup', () => {
+      isDragging = false;
+    });
+
+    compassEl.addEventListener('pointercancel', () => {
+      isDragging = false;
+    });
+  }
+
+  if (panel) {
+    panel.addEventListener('scroll', () => {
+      requestAnimationFrame(updateCompass);
+    });
+    updateCompass();
+  }
 
   // =============================================
   // SPEED COMPARISON

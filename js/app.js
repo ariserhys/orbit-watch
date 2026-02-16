@@ -10,7 +10,6 @@ import {
   BackSide,
   BufferAttribute,
   BufferGeometry,
-  CanvasTexture,
   Color,
   Mesh,
   MeshPhongMaterial,
@@ -18,8 +17,6 @@ import {
   PointsMaterial,
   ShaderMaterial,
   SphereGeometry,
-  Sprite,
-  SpriteMaterial,
   TextureLoader,
   TOUCH,
   Vector2,
@@ -157,7 +154,6 @@ import {
     // Enhancements
     starField: null,
     fresnelMesh: null,
-    issSprite: null,
     issLabel: null,
     currentLocation: '',
     // Camera follow
@@ -165,8 +161,6 @@ import {
     userInteracted: false,
     lastInteractionTime: 0,
     idleUpdates: 0,
-    // Animation state (for merged loop)
-    breathPhase: 0,
   };
 
   // --- DOM Refs ---
@@ -273,134 +267,6 @@ import {
     state.fresnelMesh = new Mesh(glowGeo, glowMat);
     state.fresnelMesh.matrixAutoUpdate = false;
     scene.add(state.fresnelMesh);
-  }
-
-  // ============================================
-  //  ENHANCEMENT 3: Custom ISS Marker Sprite
-  // ============================================
-  function createISSMarkerTexture() {
-    const size = 128;
-    const canvas = document.createElement('canvas');
-    canvas.width = size;
-    canvas.height = size;
-    const ctx = canvas.getContext('2d');
-    const cx = size / 2;
-    const cy = size / 2;
-
-    // Outer glow
-    const gradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, cx);
-    gradient.addColorStop(0, 'rgba(0, 229, 255, 0.9)');
-    gradient.addColorStop(0.15, 'rgba(0, 229, 255, 0.6)');
-    gradient.addColorStop(0.35, 'rgba(0, 229, 255, 0.15)');
-    gradient.addColorStop(0.6, 'rgba(0, 229, 255, 0.05)');
-    gradient.addColorStop(1, 'rgba(0, 229, 255, 0)');
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, size, size);
-
-    // Crosshair lines
-    ctx.strokeStyle = 'rgba(0, 229, 255, 0.7)';
-    ctx.lineWidth = 1.5;
-    // Top
-    ctx.beginPath();
-    ctx.moveTo(cx, cy - 30);
-    ctx.lineTo(cx, cy - 12);
-    ctx.stroke();
-    // Bottom
-    ctx.beginPath();
-    ctx.moveTo(cx, cy + 12);
-    ctx.lineTo(cx, cy + 30);
-    ctx.stroke();
-    // Left
-    ctx.beginPath();
-    ctx.moveTo(cx - 30, cy);
-    ctx.lineTo(cx - 12, cy);
-    ctx.stroke();
-    // Right
-    ctx.beginPath();
-    ctx.moveTo(cx + 12, cy);
-    ctx.lineTo(cx + 30, cy);
-    ctx.stroke();
-
-    // Outer ring
-    ctx.strokeStyle = 'rgba(0, 229, 255, 0.5)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.arc(cx, cy, 20, 0, Math.PI * 2);
-    ctx.stroke();
-
-    // Inner bright core
-    const coreGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 6);
-    coreGrad.addColorStop(0, 'rgba(255, 255, 255, 1)');
-    coreGrad.addColorStop(0.4, 'rgba(0, 229, 255, 0.9)');
-    coreGrad.addColorStop(1, 'rgba(0, 229, 255, 0)');
-    ctx.fillStyle = coreGrad;
-    ctx.beginPath();
-    ctx.arc(cx, cy, 6, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Corner brackets (targeting reticle style)
-    ctx.strokeStyle = 'rgba(0, 229, 255, 0.4)';
-    ctx.lineWidth = 1.5;
-    const bracketSize = 8;
-    const bracketOffset = 26;
-
-    // Top-left
-    ctx.beginPath();
-    ctx.moveTo(cx - bracketOffset, cy - bracketOffset + bracketSize);
-    ctx.lineTo(cx - bracketOffset, cy - bracketOffset);
-    ctx.lineTo(cx - bracketOffset + bracketSize, cy - bracketOffset);
-    ctx.stroke();
-    // Top-right
-    ctx.beginPath();
-    ctx.moveTo(cx + bracketOffset - bracketSize, cy - bracketOffset);
-    ctx.lineTo(cx + bracketOffset, cy - bracketOffset);
-    ctx.lineTo(cx + bracketOffset, cy - bracketOffset + bracketSize);
-    ctx.stroke();
-    // Bottom-left
-    ctx.beginPath();
-    ctx.moveTo(cx - bracketOffset, cy + bracketOffset - bracketSize);
-    ctx.lineTo(cx - bracketOffset, cy + bracketOffset);
-    ctx.lineTo(cx - bracketOffset + bracketSize, cy + bracketOffset);
-    ctx.stroke();
-    // Bottom-right
-    ctx.beginPath();
-    ctx.moveTo(cx + bracketOffset - bracketSize, cy + bracketOffset);
-    ctx.lineTo(cx + bracketOffset, cy + bracketOffset);
-    ctx.lineTo(cx + bracketOffset, cy + bracketOffset - bracketSize);
-    ctx.stroke();
-
-    return new CanvasTexture(canvas);
-  }
-
-  function createISSSprite(scene) {
-    const texture = createISSMarkerTexture();
-    const material = new SpriteMaterial({
-      map: texture,
-      transparent: true,
-      depthTest: false,
-      depthWrite: false,
-      blending: AdditiveBlending,
-    });
-    state.issSprite = new Sprite(material);
-    state.issSprite.scale.set(22, 22, 1);
-    scene.add(state.issSprite);
-  }
-
-  function updateISSSpritePosition(lat, lng) {
-    if (!state.issSprite || !state.globe) return;
-    const globeRadius = state.globe.getGlobeRadius();
-    const altitude = 0.06; // Same as point altitude
-    const r = globeRadius * (1 + altitude);
-
-    // Convert lat/lng to 3D position
-    const phi = (90 - lat) * (Math.PI / 180);
-    const theta = (lng + 180) * (Math.PI / 180);
-
-    state.issSprite.position.set(
-      -r * Math.sin(phi) * Math.cos(theta),
-      r * Math.cos(phi),
-      r * Math.sin(phi) * Math.sin(theta)
-    );
   }
 
   // --- ISS HTML Label ---
@@ -523,8 +389,7 @@ import {
       const globeRadius = state.globe.getGlobeRadius();
       createFresnelGlow(state.globe.scene(), globeRadius);
 
-      // ENHANCEMENT 3: Add ISS sprite marker
-      createISSSprite(state.globe.scene());
+
 
       // Add cloud layer
       initClouds(loader);
@@ -605,13 +470,7 @@ import {
         state.cloudMesh.rotation.y += 0.0001;
       }
 
-      // 3. ISS sprite breathing
-      if (state.issSprite) {
-        state.breathPhase += 0.02;
-        const scale = 22 + Math.sin(state.breathPhase) * 2;
-        state.issSprite.scale.set(scale, scale, 1);
-        state.issSprite.material.opacity = 0.75 + Math.sin(state.breathPhase * 0.7) * 0.25;
-      }
+
 
       // 4. Sun position update
       if (state.globeMaterial && state.dayNightEnabled) {
@@ -733,8 +592,7 @@ import {
     state.ringsData[0] = { lat, lng };
     state.globe.ringsData(state.ringsData);
 
-    // ENHANCEMENT 3: Update sprite position
-    updateISSSpritePosition(lat, lng);
+
 
     // Update HTML label position
     state.globe.htmlElementsData([{

@@ -105,11 +105,14 @@ ul {
 }
 
 .nav__logo {
-    font-family: var(--font-mono);
-    font-weight: 700;
-    font-size: 13px;
+    font-family: 'Satoshi', var(--font-sans);
+    font-weight: 900;
+    font-size: 22px;
     letter-spacing: 4px;
+    line-height: 0.85;
+    margin: -2px 0;
     color: var(--text-primary);
+    text-shadow: 0 0 1px currentColor;
 }
 
 .nav__status {
@@ -213,6 +216,100 @@ ul {
     max-height: calc(100vh - 120px);
     max-height: calc(100dvh - 120px);
     transition: opacity 0.25s ease, transform 0.25s ease;
+    scrollbar-width: none;
+    /* Firefox */
+}
+
+.panel::-webkit-scrollbar {
+    display: none;
+    /* Chrome / Safari */
+}
+
+/* --- Compass Scrollbar --- */
+.compass-scroll {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: calc(41.67% - 20px);
+    width: 24px;
+    z-index: 10;
+    pointer-events: auto;
+    display: flex;
+    align-items: stretch;
+    transition: opacity 0.3s ease;
+    cursor: pointer;
+}
+
+.compass-scroll__track {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+/* Tick marks — dense small ticks via repeating gradient */
+.compass-scroll__ticks {
+    position: absolute;
+    inset: 0;
+    background:
+        /* Major ticks every 40px — wider, brighter */
+        repeating-linear-gradient(to bottom,
+            var(--text-tertiary) 0px,
+            var(--text-tertiary) 1px,
+            transparent 1px,
+            transparent 40px),
+        /* Minor ticks every 8px — narrow, subtle */
+        repeating-linear-gradient(to bottom,
+            rgba(255, 255, 255, 0.08) 0px,
+            rgba(255, 255, 255, 0.08) 1px,
+            transparent 1px,
+            transparent 8px);
+    /* Offset the major ticks to only cover the right portion (wider) */
+    background-size: 100% 100%, 60% 100%;
+    background-position: right top, right top;
+    background-repeat: repeat-y;
+}
+
+/* Sliding indicator container */
+.compass-scroll__indicator {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 100%;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    will-change: transform;
+    cursor: grab;
+}
+
+.compass-scroll__indicator:active {
+    cursor: grabbing;
+}
+
+/* Triangle pointer + glow line */
+.compass-scroll__pointer {
+    display: block;
+    width: 100%;
+    height: 2px;
+    background: var(--accent);
+    position: relative;
+    box-shadow: 0 0 6px var(--accent), 0 0 12px rgba(0, 245, 212, 0.3);
+}
+
+.compass-scroll__pointer::before {
+    content: '';
+    position: absolute;
+    left: -5px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+    border-right: 6px solid var(--accent);
+    filter: drop-shadow(0 0 3px var(--accent));
 }
 
 .panel--hidden {
@@ -1042,6 +1139,8 @@ ul {
 .iss-label {
     display: flex;
     flex-direction: column;
+    align-items: center;
+    text-align: center;
     gap: 3px;
     padding: 6px 12px;
     background: rgba(0, 0, 0, 0.65);
@@ -1112,11 +1211,61 @@ ul {
     z-index: 10;
 }
 
-/* --- Responsive --- */
+/* --- Hamburger (hidden on desktop, shown on mobile) --- */
+.nav__hamburger {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    padding: 6px;
+    min-width: 44px;
+    min-height: 44px;
+    cursor: pointer;
+    color: var(--text-secondary);
+    font-size: 22px;
+    transition: all var(--transition);
+    z-index: 101;
+}
+
+.nav__hamburger:hover {
+    color: var(--text-primary);
+    background: var(--accent-dim);
+}
+
+.nav__hamburger.open {
+    color: var(--accent);
+}
+
+/* --- Mobile Backdrop --- */
+.nav__backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 99;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.nav__backdrop.open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* --- Responsive: Tablet (≤ 900px) --- */
 @media (max-width: 900px) {
     .main {
         grid-template-columns: 1fr;
         grid-template-rows: 55vh auto;
+    }
+
+    .compass-scroll {
+        display: none;
     }
 
     .globe-container {
@@ -1175,24 +1324,247 @@ ul {
     }
 
     .stats-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr 1fr;
     }
 }
 
-@media (max-width: 480px) {
+/* --- Responsive: Mobile (≤ 600px) --- */
+@media (max-width: 600px) {
+
+    /* Hamburger visible */
+    .nav__hamburger {
+        display: flex;
+    }
+
+    .nav__backdrop {
+        display: block;
+    }
+
+    /* Nav */
+    .nav {
+        padding: 12px 16px;
+        gap: 8px;
+    }
+
+    .nav__logo {
+        font-size: 11px;
+        letter-spacing: 3px;
+    }
+
+    .nav__status {
+        margin-left: auto;
+        margin-right: 4px;
+    }
+
+    .nav__label {
+        font-size: 9px;
+    }
+
+    /* Toolbar slide-in overlay */
+    .nav__toolbar {
+        position: fixed;
+        top: 0;
+        right: 0;
+        width: 260px;
+        height: 100vh;
+        height: 100dvh;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 4px;
+        background: rgba(10, 10, 10, 0.97);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-left: 1px solid var(--text-tertiary);
+        padding: 72px 20px 32px;
+        overflow-y: auto;
+        transform: translateX(100%);
+        transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 100;
+    }
+
+    .nav__toolbar.open {
+        transform: translateX(0);
+    }
+
+    /* Show labels again inside the slide-out */
+    .nav__toolbar .toolbar__label {
+        display: block !important;
+        font-size: 10px;
+    }
+
+    .nav__toolbar .toolbar__btn {
+        justify-content: flex-start;
+        padding: 12px 16px;
+        border-radius: 6px;
+        gap: 12px;
+        width: 100%;
+    }
+
+    .nav__toolbar .toolbar__btn:hover {
+        background: var(--bg-elevated);
+    }
+
+    .nav__toolbar .toolbar__icon {
+        font-size: 18px;
+    }
+
+    .nav__toolbar .toolbar__sep {
+        width: 100%;
+        height: 1px;
+        margin: 6px 0;
+    }
+
+    /* Globe full-screen feel */
+    .main {
+        grid-template-rows: 70vh auto;
+    }
+
+    #globe {
+        min-height: 70vh;
+        min-height: 70dvh;
+        height: 70vh;
+        height: 70dvh;
+    }
+
+    /* Compact data panel */
+    .panel {
+        padding: 24px 16px;
+        gap: 24px;
+    }
+
     .hero-title {
         font-size: 56px;
+    }
+
+    .hero-subtitle {
+        font-size: 10px;
+        letter-spacing: 3px;
+    }
+
+    .panel__coords {
+        gap: 16px;
     }
 
     .coord__value {
         font-size: 28px;
     }
 
+    .panel__metrics {
+        gap: 12px;
+    }
+
+    .metric {
+        padding: 14px 16px;
+    }
+
     .metric__value {
         font-size: 22px;
     }
 
+    /* Crew */
+    .crew__list {
+        gap: 4px;
+    }
+
+    .crew__list li {
+        font-size: 10px;
+        padding: 3px 8px;
+    }
+
+    /* Location */
+    .location__value {
+        font-size: 12px;
+    }
+
+    /* Drawers — full-screen overlay on mobile */
+    .drawer {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100vh;
+        height: 100dvh;
+        border-right: none;
+        border-radius: 0;
+        padding: 20px 16px;
+        z-index: 50;
+    }
+
+    .drawer__title {
+        font-size: 40px;
+    }
+
+    .drawer__subtitle {
+        font-size: 9px;
+        margin-top: -12px;
+    }
+
+    /* Camera embed */
+    .camera-sources__btns {
+        flex-wrap: wrap;
+    }
+
+    .camera-src-btn {
+        flex: 1;
+        min-width: 100px;
+        text-align: center;
+        font-size: 10px;
+        padding: 8px 10px;
+    }
+
+    /* Footer */
+    .footer {
+        padding: 10px 16px;
+        font-size: 9px;
+    }
+
+    /* Stats grid single-column on mobile */
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    /* Speed bars */
+    .speed-bar__name {
+        font-size: 9px;
+    }
+
+    /* ISS Label */
+    .iss-label {
+        padding: 5px 10px;
+    }
+
+    .iss-label__tag {
+        font-size: 10px;
+    }
+
+    .iss-label__location {
+        font-size: 8px;
+        max-width: 130px;
+    }
+}
+
+/* --- Responsive: Extra-small (≤ 400px) --- */
+@media (max-width: 400px) {
+    .hero-title {
+        font-size: 44px;
+    }
+
+    .coord__value {
+        font-size: 24px;
+    }
+
+    .metric__value {
+        font-size: 20px;
+    }
+
     .panel__metrics {
         flex-direction: column;
+    }
+
+    .drawer__title {
+        font-size: 32px;
+    }
+
+    .nav__toolbar {
+        width: 100%;
     }
 }

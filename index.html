@@ -20,6 +20,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Space+Mono:wght@400;700&display=swap"
         rel="stylesheet">
+    <link href="https://api.fontshare.com/v2/css?f[]=satoshi@900,700&display=swap" rel="stylesheet">
 
     <!-- Icons -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
@@ -39,7 +40,11 @@
     <!-- Nav -->
     <nav class="nav">
         <div class="nav__logo">ORBITWATCH</div>
-        <div class="nav__toolbar">
+        <button class="nav__hamburger" id="nav-hamburger" aria-label="Toggle menu" aria-expanded="false">
+            <i class="ph ph-list"></i>
+        </button>
+        <div class="nav__backdrop" id="nav-backdrop"></div>
+        <div class="nav__toolbar" id="nav-toolbar">
             <button class="toolbar__btn active" id="btn-daynight" title="Day/Night Cycle">
                 <i class="ph ph-sun toolbar__icon"></i>
                 <span class="toolbar__label">DAY/NIGHT</span>
@@ -132,6 +137,16 @@
                 <span class="location__value" id="location">Calculating...</span>
             </div>
         </section>
+
+        <!-- Compass Scrollbar -->
+        <div class="compass-scroll" id="compass-scroll" aria-hidden="true">
+            <div class="compass-scroll__track">
+                <div class="compass-scroll__ticks"></div>
+                <div class="compass-scroll__indicator" id="compass-indicator">
+                    <span class="compass-scroll__pointer"></span>
+                </div>
+            </div>
+        </div>
 
         <!-- Drawer: Speed Comparison -->
         <section class="drawer" id="drawer-speed" aria-label="Speed Comparison">
@@ -228,7 +243,7 @@
                     <button class="camera-src-btn active"
                         data-src="https://www.youtube.com/embed/vytmBNhc9ig?autoplay=1&mute=1">🌍 HD Earth</button>
                     <button class="camera-src-btn"
-                        data-src="https://www.youtube.com/embed/DDU-rZs-Ic4?autoplay=1&mute=1">🛰 NASA TV</button>
+                        data-src="https://www.youtube.com/embed/aB1yRz0HhdY?autoplay=1&mute=1">🛰 NASA TV</button>
                 </div>
             </div>
             <div class="camera-note">
